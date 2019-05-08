@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="shop.teddy0527.mapper.BoardMapper">
+ 	<sql id="criteria">
+	    <trim prefix="(" suffix= ") AND" prefixOverrides="OR">
+	    	<foreach collection="typeArr" item="type">
+	    		<trim prefix="OR">
+	    			<choose>
+		    			<when test='type == "T"'>
+		    				TITLE LIKE '%${keyword}%'
+		    			</when>
+		    			<when test='type == "C"'>
+		    				CONTENT LIKE '%${keyword}%'
+		    			</when>
+		    			<when test='type == "W"'>
+		    				WRITER LIKE '%${keyword}%'
+		    			</when>
+	    			</choose>
+	    		</trim>
+	    	</foreach>
+	    </trim>
+ 	</sql>
+	 
+ 	<select id="getList" resultType="shop.teddy0527.domain.BoardVo">
+		SELECT * FROM TBL_BOARD WHERE BNO > 0
+ 	</select>
+ 	
+ 	<select id="getListWithPage" resultType="shop.teddy0527.domain.BoardVo">
+ 		<![CDATA[
+ 			SELECT *
+			FROM (
+			    SELECT /*+ INDEX_DESC(T PK_BOARD) */ T.*, ROWNUM RN
+			    FROM TBL_BOARD T
+			    WHERE
+	    ]]>
+		<include refid="criteria"/>
+	    
+	    
+	    <![CDATA[
+			    		ROWNUM <= #{pageNum} * #{amount}
+			)
+			WHERE RN > (#{pageNum} - 1) * #{amount}
+ 		]]>
+ 	</select>
+ 	
+ 	<select id="getTotalCount" resultType="int">
+ 		SELECT COUNT(*) FROM TBL_BOARD WHERE
+ 		<include refid="criteria"/>
+ 		BNO > 0
+ 	</select>
+ 	
+ 	<insert id="insert">
+ 		INSERT INTO TBL_BOARD (BNO, TITLE, CONTENT, WRITER)
+ 		VALUES (SEQ_BOARD.NEXTVAL, #{title}, #{content}, #{writer})
+ 	</insert>
+ 	
+ 	<insert id="insertSelectKey">
+ 		<selectKey keyProperty="bno" order="BEFORE" resultType="long">
+ 			SELECT SEQ_BOARD.NEXTVAL FROM DUAL
+ 		</selectKey>
+ 		INSERT INTO TBL_BOARD (BNO, TITLE, CONTENT, WRITER)
+ 		VALUES (#{bno}, #{title}, #{content}, #{writer})
+ 	</insert>
+ 	
+ 	<select id="read" resultType="shop.teddy0527.domain.BoardVo">
+ 		SELECT * FROM TBL_BOARD WHERE BNO = #{bno}
+ 	</select>
+ 	
+ 	<delete id="delete">
+ 		DELETE TBL_BOARD WHERE BNO = #{bno}
+ 	</delete>
+ 	
+ 	<update id="update">
+ 		UPDATE TBL_BOARD
+ 		SET
+	 		TITLE = #{title},
+	 		CONTENT = #{content},
+	 		WRITER = #{writer},
+	 		UPDATEDATE = SYSDATE
+ 		WHERE BNO = #{bno}
+ 	</update>
+ </mapper>
